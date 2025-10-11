@@ -1,7 +1,14 @@
-FROM nginx:stable-alpine
+FROM nginx:alpine
+
+LABEL maintainer="prakash"
+LABEL project="fusionpact-devops"
+
 WORKDIR /usr/share/nginx/html
-# remove default content and copy
+
 RUN rm -rf ./*
-COPY Devops_Intern.html ./index.html
+
+COPY index.html .
+
 EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]
