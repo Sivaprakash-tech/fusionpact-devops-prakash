@@ -7,7 +7,7 @@ WORKDIR /usr/share/nginx/html
 
 RUN rm -rf ./*
 
-COPY index.html .
+COPY Devops_Intern.html .
 
 EXPOSE 80
 
