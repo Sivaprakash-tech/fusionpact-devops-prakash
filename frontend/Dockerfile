@@ -1,14 +1,11 @@
-FROM nginx:alpine
+# frontend/Dockerfile
+FROM nginx:stable-alpine
 
-LABEL maintainer="prakash"
-LABEL project="fusionpact-devops"
+# Remove default html
+RUN rm -rf /usr/share/nginx/html/*
 
-WORKDIR /usr/share/nginx/html
-
-RUN rm -rf ./*
-
-COPY Devops_Intern.html .
+# Copy the static site
+COPY ./Devops_intern.html /usr/share/nginx/html/index.html
 
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]
