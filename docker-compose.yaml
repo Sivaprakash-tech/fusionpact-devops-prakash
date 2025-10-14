@@ -1,34 +1,34 @@
+version: '3.8'
+
 services:
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    image: devops-intern-frontend:local
+    build: ./frontend
+    image: fusionpact/frontend:latest
+    container_name: fusion_frontend
     ports:
-      - "8080:80"
+      - "80:80"
     restart: unless-stopped
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    image: devops-intern-backend:local
+    build: ./backend
+    image: fusionpact/backend:latest
+    container_name: fusion_backend
     ports:
       - "8000:8000"
-    volumes:
-      - backend-data:/app/app/data
     restart: unless-stopped
-    depends_on:
-      - prometheus
+    volumes:
+      - backend_data:/app/app/data
 
   prometheus:
     image: prom/prometheus:latest
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
+    container_name: prometheus
     ports:
       - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
     restart: unless-stopped
     depends_on:
       - backend
@@ -36,22 +36,37 @@ services:
 
   grafana:
     image: grafana/grafana:latest
+    container_name: grafana
     ports:
       - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin     # change this before final submission
+    volumes:
+      - grafana_data:/var/lib/grafana
     restart: unless-stopped
     depends_on:
       - prometheus
 
   cadvisor:
     image: gcr.io/google-containers/cadvisor:latest
+    container_name: cadvisor
     ports:
-      - "8081:8080"
+      - "8080:8080"
     volumes:
       - /:/rootfs:ro
-      - /var/run:/var/run:rw
+      - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
     restart: unless-stopped
 
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    network_mode: "host"     # collects host metrics; requires privileged host networking
+    restart: unless-stopped
+
 volumes:
-  backend-data:
+  prometheus_data:
+  grafana_data:
+  backend_data:
