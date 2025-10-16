@@ -1,70 +1,60 @@
- name: CI/CD Pipeline - Fusionpact DevOps Assessment
+name: CI/CD Pipeline - Fusionpact DevOps Assessment
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build-test-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout Code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Step 3: Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      # Step 4: Build Backend Image
       - name: Build Backend Image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/devops-backend:latest ./backend
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest ./backend
 
-      # Step 5: Build Frontend Image
       - name: Build Frontend Image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/devops-frontend:latest ./frontend
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest ./frontend
 
-      # Step 6: Run Backend Tests (optional if you have pytest)
-      - name: Run backend tests
+      - name: Run Backend Tests (optional)
         working-directory: ./backend
         run: |
-          pip install -r requirements.txt
-          pytest || echo "No tests found"
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -d tests ]; then pytest || echo "No tests found"; fi
 
-      # Step 7: Push Images to Docker Hub
       - name: Push Docker Images
         run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/devops-backend:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/devops-frontend:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest
 
-      # Step 8: Deploy to Cloud Server
-      - name: Deploy to Cloud via SSH
+      - name: Deploy to Azure VM via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo "Pulling latest images..."
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/devops-backend:latest
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/devops-frontend:latest
+            cd /home/azureuser/fusionpact
+            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest
+            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest
+            sudo docker-compose down || true
+            sudo docker-compose up -d --remove-orphans
+            echo "✅ Deployment successful"
 
-            echo "Stopping existing containers..."
-            docker-compose down || true
-
-            echo "Starting new containers..."
-            docker-compose up -d
-
-            echo "Deployment successful ✅"
