@@ -2,16 +2,14 @@ version: '3.8'
 
 services:
   frontend:
-    build: ./frontend
-    image: fusionpact/frontend:latest
+    image: prakashdevops21/frontend:latest
     container_name: fusion_frontend
     ports:
       - "80:80"
     restart: unless-stopped
 
   backend:
-    build: ./backend
-    image: fusionpact/backend:latest
+    image: prakashdevops21/backend:latest
     container_name: fusion_backend
     ports:
       - "8000:8000"
@@ -41,31 +39,14 @@ services:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin     # change this before final submission
+      - GF_SECURITY_ADMIN_PASSWORD=admin  # 🔒 Change this before submission
     volumes:
       - grafana_data:/var/lib/grafana
     restart: unless-stopped
     depends_on:
       - prometheus
 
-  cadvisor:
-    image: gcr.io/google-containers/cadvisor:latest
-    container_name: cadvisor
-    ports:
-      - "8080:8080"
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-    restart: unless-stopped
-
-  node_exporter:
-    image: prom/node-exporter:latest
-    container_name: node_exporter
-    network_mode: "host"     # collects host metrics; requires privileged host networking
-    restart: unless-stopped
-
+ 
 volumes:
   prometheus_data:
   grafana_data:
